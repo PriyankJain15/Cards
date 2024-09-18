@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="DialogAnimation">
+        <item name="android:windowEnterAnimation">@anim/dialog_scaleout_anim</item>
+        <!-- You can also add an exit animation if needed -->
+        <item name="android:windowExitAnimation">@anim/dialog_scalein_anim</item>
+    </style>
+
+    <style name="DialogBottomAnimation">
+        <item name="android:windowEnterAnimation">@anim/dialog_slidein_botton</item>
+    </style>
+
+    <style name="tabtext">
+        <item name="android:textSize">20sp</item>
+    </style>
+
+</resources>
