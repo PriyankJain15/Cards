@@ -15,7 +15,6 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
@@ -32,7 +31,7 @@ class MainActivity : AppCompatActivity(){
     private lateinit var binding:ActivityMainBinding
     private lateinit var database: DatabaseReference
 
-    public lateinit var create_dialog:Dialog
+    lateinit var create_dialog:Dialog
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -131,8 +130,6 @@ class MainActivity : AppCompatActivity(){
             create_dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             create_dialog.window?.attributes?.windowAnimations = R.style.DialogBottomAnimation
             create_dialog.window?.setGravity(Gravity.BOTTOM)
-
-            Log.w("banner","shown")
 
             create_dialog.show()
 

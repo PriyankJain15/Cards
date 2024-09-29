@@ -1,5 +1,6 @@
 package com.example.cards
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
@@ -65,27 +66,25 @@ class JoinFragment : Fragment() {
     }
 
     // Set up real-time updates listener
-
-
-
+@SuppressLint("SuspiciousIndentation")
 private fun addPlayerToGame(gamecode: String) {
 
         var pref: SharedPreferences? = activity?.getSharedPreferences("userdata", AppCompatActivity.MODE_PRIVATE)
 
-        val playerId = (0..999).random().toString()
+        val playerId = (0..9999).random().toString()
         val playerName =  pref?.getString("username", "Guest").toString() // Example: Replace with actual player name
         val profileImageResId = pref?.getInt("profileImage", R.drawable.profile12) as Int // Example: Replace with actual profile image resource ID
 
         Firebase.firestore.collection("games").document(gamecode).get().addOnSuccessListener {
 
             Log.w("gamecode","inside")
-            var gameModel = it.toObject(GameModelFirebase::class.java)
-                gameModel?.let{
+            var gameModel = it?.toObject(GameModelFirebase::class.java)
+                gameModel.let{
 
-                    if (it.teams.size < 2) {
+                    if (it?.teams?.size !!< 2) {
                         // Initialize missing teams if necessary
                         while (it.teams.size < 2) {
-                            it.teams = it.teams + GameModelFirebase.Team()
+                            it.teams = (it.teams + GameModelFirebase.Team()).toMutableList()
                         }
                     }
 
@@ -107,7 +106,7 @@ private fun addPlayerToGame(gamecode: String) {
                     Log.w("gamecode", "new player assign")
                     Log.w("gamecode", it.teams[teamToJoin].players.toString())
 
-                    it.teams[teamToJoin].players = it.teams[teamToJoin].players + newPlayer
+                    it.teams[teamToJoin].players = (it.teams[teamToJoin].players + newPlayer).toMutableList()
                     Log.w("gamecode", it.teams[teamToJoin].players.toString())
                     // Update the game in Firestore
                     Firebase.firestore.collection("games").document(gamecode)
@@ -148,7 +147,7 @@ private fun addPlayerToGame(gamecode: String) {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         // Inflate the layout for this fragment
         var view:View=inflater.inflate(R.layout.fragment_join, container, false)
 

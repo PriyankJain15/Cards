@@ -3,16 +3,16 @@ package com.example.cards
 data class GameModelFirebase(
     val gameCode: String = "",
     var status: Status? = null,
-    var teams: List<Team> = listOf(),
+    var teams: MutableList<Team> = mutableListOf(),
     val currentTrick: Trick? = null,
     val highestBidSuit: Suit? = null,
     val highestBid: Int = 0,
     var highestBidPlayer: Team.Player? = null
 ) {
-    constructor() : this("", Status.WAITING, listOf(), null, null)
+    constructor() : this("", Status.WAITING, mutableListOf(), null, null)
 
     data class Team(
-        var players: List<Player> = listOf(),
+        var players: MutableList<Player> = mutableListOf<Player>(),
         var score: Int = 0,
         var oppscore:Int = 0,
         var highestBid: Int = 0,
@@ -20,7 +20,7 @@ data class GameModelFirebase(
         val teamId: Int?,
         var highestBidPlayer: Player? = null
     ) {
-        constructor() : this(listOf(), 0, 0, 0, 0,0,null)
+        constructor() : this(mutableListOf(), 0, 0, 0, 0,0,null)
 
         data class Player(
             val name: String = "",
@@ -53,6 +53,6 @@ data class GameModelFirebase(
         CLUBS, DIAMONDS, HEARTS, SPADES
     }
     enum class Status{
-        WAITING,PLAYING,SCORING
+        WAITING,PLAYING,SCORING,DELETED
     }
 }

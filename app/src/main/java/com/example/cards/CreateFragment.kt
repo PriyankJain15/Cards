@@ -1,12 +1,8 @@
 package com.example.cards
 
-import android.app.Activity
-import android.app.Dialog
-import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -14,8 +10,6 @@ import android.view.ViewGroup
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.Firebase
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.firestore
 
 
@@ -50,6 +44,7 @@ class CreateFragment() : Fragment() {
             startActivity(intent)
 
 
+
         })
         return view
     }
@@ -62,8 +57,9 @@ class CreateFragment() : Fragment() {
 
     fun createGameInFirebase(gameCode: String, playerName: String, profileImageResId: Int): String {
 
-        val playerId = (0..999).random()
+        val playerId = (0..9999).random()
          // Assign team ID (1 or 2) based on your logic
+
 
         // Create a new Player
         val player = GameModelFirebase.Team.Player(
@@ -74,8 +70,9 @@ class CreateFragment() : Fragment() {
         )
 
         // Create a new Team and add the player
+
         val team = GameModelFirebase.Team(
-            players = listOf(player),
+            players = mutableListOf(player),
             score = 0,
             oppscore = 0,
             highestBid = 0,
@@ -87,7 +84,7 @@ class CreateFragment() : Fragment() {
         val gameModel = GameModelFirebase(
             gameCode = gameCode,
             status = GameModelFirebase.Status.WAITING,
-            teams = listOf(team),
+            teams = mutableListOf(team),
             currentTrick = null,
             highestBidSuit = null
         )
