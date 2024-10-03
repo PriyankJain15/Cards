@@ -5,17 +5,23 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.Observer
 import com.example.cards.databinding.ActivityTeamingBinding
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import de.hdodenhof.circleimageview.CircleImageView
 
 class teaming : AppCompatActivity() {
 
     private lateinit var binding: ActivityTeamingBinding
-
     lateinit var gameCode:String
+    private var firstPlayer:GameModelFirebase.Team.Player? = null
+    private var secondPlayer:GameModelFirebase.Team.Player? = null
+    private var swapPlayerList:MutableList<GameModelFirebase.Team.Player> = mutableListOf()
+    private var swapMode = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityTeamingBinding.inflate(layoutInflater)
@@ -46,10 +52,7 @@ class teaming : AppCompatActivity() {
         val playerName = intent.getStringExtra("PLAYER_NAME") ?: ""
         val profileImageResId = intent.getIntExtra("PROFILE_IMAGE_RES_ID", R.drawable.profile12)
 
-        // Fetch the game model
-
         binding.codeText.text = "CODE-${gameCode}"
-
 
         GameDataFirebase.gamemodel.observe(this, Observer { value ->
 
@@ -58,12 +61,8 @@ class teaming : AppCompatActivity() {
                 return@Observer
             }
 
-            if(value.status == GameModelFirebase.Status.DELETED){
-                startActivity(Intent(this@teaming, MainActivity::class.java))
-                finish()
-            }
-
-            Log.w("Listen Observed", "INSIDE")
+            checkCreatorId(value)
+//            binding.swapButton.visibility = View.VISIBLE
 
             // Check if team 0 exists and has players
             if (value.teams.isNotEmpty() && value.teams.size > 0) {
@@ -99,7 +98,7 @@ class teaming : AppCompatActivity() {
                 if (team2.players.isNotEmpty() && team2.players.size > 0) {
                     binding.profileImageT3.setImageResource(value.teams[1].players[0].profileImageResId)
                     binding.playerNameT3.text = value.teams[1].players[0].name
-                    binding.profileImageT4.setImageResource(R.drawable.profile12)
+                    binding.profileImageT4.setImageResource(R.drawable.backgrund2)
                     binding.playerNameT4.text = ""
                 }
 
@@ -111,17 +110,64 @@ class teaming : AppCompatActivity() {
             }
         })
 
-        binding.startButton.setOnClickListener(View.OnClickListener { startActivity(Intent(this@teaming, MainActivity::class.java)) })
-        binding.backButton.setOnClickListener(View.OnClickListener {
+        binding.swapIcon.setOnClickListener(View.OnClickListener {
+            if(swapPlayerList.size == 2) {
+                firstPlayer = swapPlayerList[0]
+                secondPlayer = swapPlayerList[1]
+
+                var team1Index = -1
+                var team2Index = -1
+                var player1Index = -1
+                var player2Index = -1
+
+                var gameModel = GameDataFirebase.gamemodel.value ?: return@OnClickListener
+
+                    for (teamIndex in gameModel.teams.indices) {
+                        val team = gameModel.teams[teamIndex]
+                        val playerIndex1 = team.players.indexOfFirst { it.id == firstPlayer!!.id }
+                        if (playerIndex1 != -1) {
+                            team1Index = teamIndex
+                            player1Index = playerIndex1
+                            break
+                        }
+                    }
+                    for (teamIndex in gameModel.teams.indices) {
+                        val team = gameModel.teams[teamIndex]
+                        val playerIndex2 = team.players.indexOfFirst { it.id == secondPlayer!!.id }
+                        if (playerIndex2 != -1) {
+                            team2Index = teamIndex
+                            player2Index = playerIndex2
+                            break
+                        }
+                    }
+
+                    if (team1Index != -1 && team2Index != -1 && player1Index != -1 && player2Index != -1) {
+                        var temp = gameModel.teams[team1Index].players[player1Index]
+                        gameModel.teams[team1Index].players[player1Index] =
+                            gameModel.teams[team2Index].players[player2Index]
+                        gameModel.teams[team2Index].players[player2Index] = temp
+                    }
+                    GameDataFirebase.saveGameModel(gameModel) {
+                        swapPlayerList.clear()
+                        dimmingView(1f)
+                        binding.swapButton.text = "SWAP"
+                        binding.versus.visibility = View.VISIBLE
+                        binding.swapIcon.visibility = View.INVISIBLE
+                        swapMode = false
+                    }
+            }
+        })
+
+        binding.startButton.setOnClickListener{ startActivity(Intent(this@teaming, MainActivity::class.java)) }
+        binding.backButton.setOnClickListener{
 
             val currentPlayerId = intent.getStringExtra("PLAYER_ID") ?: ""
 
             startActivity(Intent(this@teaming, MainActivity::class.java))
 
             GameDataFirebase.gamemodel.value?.let {gameModel ->
-                // Check if the player is team[0].players[0]
                 if (gameModel.teams.isNotEmpty() && gameModel.teams[0].players.isNotEmpty() &&
-                    gameModel.teams[0].players[0].id == currentPlayerId) {
+                    gameModel.roomCreatorId == currentPlayerId) {
 
                     // If the current player is the first player in the first team, delete the entire game
                     Firebase.firestore.collection("games").document(gameCode)
@@ -145,7 +191,132 @@ class teaming : AppCompatActivity() {
                 }
             }
 
-        })
+        }
 
+        swapPlayerList.clear()
+        binding.swapButton.setOnClickListener {
+
+            if (!swapMode) {
+                dimmingView(0.5f)
+                binding.swapButton.text = "CANCEL"
+                swapMode = true
+
+                if (swapPlayerList.size < 2) {
+                    toggleSelectionView(
+                        binding.profileImageT1,
+                        binding.playerNameT1,
+                        0,
+                        0,
+                        swapMode
+                    )
+                    toggleSelectionView(
+                        binding.profileImageT2,
+                        binding.playerNameT2,
+                        0,
+                        1,
+                        swapMode
+                    )
+                    toggleSelectionView(
+                        binding.profileImageT3,
+                        binding.playerNameT3,
+                        1,
+                        0,
+                        swapMode
+                    )
+                    toggleSelectionView(
+                        binding.profileImageT4,
+                        binding.playerNameT4,
+                        1,
+                        1,
+                        swapMode
+                    )
+                }
+
+            } else {
+                swapPlayerList.clear()
+                dimmingView(1f)
+                binding.swapButton.text = "SWAP"
+                binding.versus.visibility = View.VISIBLE
+                binding.swapIcon.visibility = View.INVISIBLE
+                swapMode = false
+
+                toggleSelectionView(binding.profileImageT1, binding.playerNameT1, 0, 0, swapMode)
+                toggleSelectionView(binding.profileImageT2, binding.playerNameT2, 0, 1, swapMode)
+                toggleSelectionView(binding.profileImageT3, binding.playerNameT3, 1, 0, swapMode)
+                toggleSelectionView(binding.profileImageT4, binding.playerNameT4, 1, 1, swapMode)
+            }
+        }
+
+    }
+
+    private fun checkCreatorId(gameModelFirebase: GameModelFirebase){
+        var currentPlayerId = intent.getStringExtra("PLAYER_ID") ?: ""
+        if(gameModelFirebase.roomCreatorId == currentPlayerId){
+            binding.swapButton.visibility = View.VISIBLE
+        }
+    }
+
+    private fun dimmingView(opacity:Float){
+        binding.apply {
+            background.alpha = opacity
+            backButton.alpha = opacity
+            codeText.alpha = opacity
+            versus.alpha = opacity
+            startButton.alpha = opacity
+            profileImageT1.alpha = opacity;playerNameT1.alpha = opacity
+            profileImageT2.alpha = opacity;playerNameT2.alpha = opacity
+            profileImageT3.alpha = opacity;playerNameT3.alpha = opacity
+            profileImageT4.alpha = opacity;playerNameT4.alpha = opacity
+        }
+    }
+    private fun toggleSelectionView(profile:CircleImageView, name:TextView, teamPos:Int, playerPos:Int,swapMode:Boolean){
+        if(swapMode) {
+            profile.setOnClickListener {
+                handleSelection(profile, name, teamPos, playerPos)
+            }
+            name.setOnClickListener {
+                handleSelection(profile, name, teamPos, playerPos)
+            }
+        }else{
+            profile.setOnClickListener(null)
+            name.setOnClickListener(null)
+        }
+    }
+
+    private fun handleSelection(profile: CircleImageView, name: TextView, teamPos: Int, playerPos: Int) {
+
+        if (name.text.toString().isEmpty()) {
+            return
+        }
+        if(swapPlayerList.size < 2 && profile.alpha == 0.5f) {
+            GameDataFirebase.gamemodel.observe(this) {
+                if (name.text != "") {
+                    swapPlayerList.add(it.teams[teamPos].players[playerPos])
+                    profile.alpha = 1f
+                    name.alpha = 1f
+
+                    if (swapPlayerList.size == 2) {
+                        binding.versus.visibility = View.INVISIBLE
+                        binding.swapIcon.visibility = View.VISIBLE
+                        binding.swapIcon.alpha = 1f
+                        binding.swapIcon.bringToFront()
+                    }
+                }
+            }
+        }else{
+            GameDataFirebase.gamemodel.observe(this){
+                val player = it.teams[teamPos].players[playerPos]
+                swapPlayerList.remove(player)
+                profile.alpha = 0.5f
+                name.alpha = 0.5f
+
+                if (swapPlayerList.size < 2) {
+                    binding.versus.visibility = View.VISIBLE
+                    binding.swapIcon.visibility = View.INVISIBLE
+                    binding.versus.alpha = 0.5f
+                }
+
+            }
+        }
     }
 }

@@ -7,9 +7,9 @@ data class GameModelFirebase(
     val currentTrick: Trick? = null,
     val highestBidSuit: Suit? = null,
     val highestBid: Int = 0,
-    var highestBidPlayer: Team.Player? = null
+    var highestBidPlayer: Team.Player? = null,
+    var roomCreatorId:String = ""
 ) {
-    constructor() : this("", Status.WAITING, mutableListOf(), null, null)
 
     data class Team(
         var players: MutableList<Player> = mutableListOf<Player>(),
@@ -17,11 +17,9 @@ data class GameModelFirebase(
         var oppscore:Int = 0,
         var highestBid: Int = 0,
         var totalTricksWon: Int = 0,
-        val teamId: Int?,
+        val teamId: Int?=null,
         var highestBidPlayer: Player? = null
     ) {
-        constructor() : this(mutableListOf(), 0, 0, 0, 0,0,null)
-
         data class Player(
             val name: String = "",
             val profileImageResId: Int = R.drawable.profile10,
@@ -29,11 +27,9 @@ data class GameModelFirebase(
             val hand: MutableList<Card> = mutableListOf(),
             var bid: Int = 0,
             var tricksWon: Int = 0,
-            val teamId: Int?,
+            val teamId: Int?= null,
             val trumpSuit:Suit = Suit.SPADES
-        ){
-            constructor() : this("", R.drawable.profile10, "", mutableListOf(), 0, 0, 0, Suit.SPADES)
-        }
+        )
     }
 
     data class Trick(

@@ -15,7 +15,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
-import com.google.firebase.firestore.ktx.firestore
 
 
 
@@ -31,22 +30,6 @@ class JoinFragment : Fragment() {
             if(gamecode.isEmpty()) {
                 Log.w("gamecode","is empty")
                 return@OnClickListener}
-
-//            Firebase.firestore.collection("games").document(gamecode)
-//                .addSnapshotListener{ snapshot, error ->
-//                    if (error != null) {
-//                        Log.w("gamecode", "Listen failed.", error)
-//                        return@addSnapshotListener
-//                    }
-//
-//                    if (snapshot != null && snapshot.exists()) {
-//                        val gameModel = snapshot.toObject(GameModelFirebase::class.java)
-//                        // Update the UI based on the game model
-//                        GameDataFirebase._gameModel.postValue(gameModel)
-//                    } else {
-//                        Log.w("gamecode", "Current data: null")
-//                    }
-//                }
 
             Firebase.firestore.collection("games").document(gamecode).get()
                 .addOnSuccessListener { document ->

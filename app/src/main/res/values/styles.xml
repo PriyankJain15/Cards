@@ -15,4 +15,7 @@
         <item name="android:textSize">20sp</item>
     </style>
 
+    <style name="swapClicked">
+
+    </style>
 </resources>

@@ -24,7 +24,7 @@ class CreateFragment() : Fragment() {
         var view = inflater.inflate(R.layout.fragment_create, container, false)
         createButton = view.findViewById(R.id.createButton)
 
-        createButton.setOnClickListener(View.OnClickListener {
+        createButton.setOnClickListener{
             val activity = activity
             val gameCode = generateGameCode()
             var pref: SharedPreferences? = activity?.getSharedPreferences("userdata", AppCompatActivity.MODE_PRIVATE)
@@ -45,7 +45,7 @@ class CreateFragment() : Fragment() {
 
 
 
-        })
+        }
         return view
     }
 
@@ -65,19 +65,13 @@ class CreateFragment() : Fragment() {
         val player = GameModelFirebase.Team.Player(
             name = playerName,
             profileImageResId = profileImageResId,
-            id = playerId.toString(),
-            teamId = null
+            id = playerId.toString()
         )
 
         // Create a new Team and add the player
 
         val team = GameModelFirebase.Team(
-            players = mutableListOf(player),
-            score = 0,
-            oppscore = 0,
-            highestBid = 0,
-            totalTricksWon = 0,
-            teamId = null
+            players = mutableListOf(player)
         )
 
         // Create a new GameModelFirebase object
@@ -85,8 +79,7 @@ class CreateFragment() : Fragment() {
             gameCode = gameCode,
             status = GameModelFirebase.Status.WAITING,
             teams = mutableListOf(team),
-            currentTrick = null,
-            highestBidSuit = null
+            roomCreatorId = playerId.toString()
         )
 
         // Save the game to Firebase
