@@ -12,6 +12,18 @@ import com.example.cards.databinding.ActivityTeamingBinding
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import de.hdodenhof.circleimageview.CircleImageView
+import im.zego.zegoexpress.ZegoExpressEngine
+import im.zego.zegoexpress.callback.IZegoEventHandler
+import im.zego.zegoexpress.constants.ZegoPlayerState
+import im.zego.zegoexpress.constants.ZegoPublisherState
+import im.zego.zegoexpress.constants.ZegoRoomStateChangedReason
+import im.zego.zegoexpress.constants.ZegoScenario
+import im.zego.zegoexpress.constants.ZegoUpdateType
+import im.zego.zegoexpress.entity.ZegoEngineProfile
+import im.zego.zegoexpress.entity.ZegoRoomConfig
+import im.zego.zegoexpress.entity.ZegoStream
+import im.zego.zegoexpress.entity.ZegoUser
+import org.json.JSONObject
 
 class teaming : AppCompatActivity() {
 
@@ -21,6 +33,10 @@ class teaming : AppCompatActivity() {
     private var secondPlayer:GameModelFirebase.Team.Player? = null
     private var swapPlayerList:MutableList<GameModelFirebase.Team.Player> = mutableListOf()
     private var swapMode = false
+    lateinit var rId:String
+
+    lateinit var playerId:String
+    lateinit var playerName:String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,6 +44,9 @@ class teaming : AppCompatActivity() {
         setContentView(binding.root)
 
         gameCode = intent.getStringExtra("GAME_CODE") ?: ""
+        playerId = intent.getStringExtra("PLAYER_ID") ?: ""
+        playerName = intent.getStringExtra("PLAYER_NAME") ?: ""
+        rId = intent.getStringExtra("RoomID").toString()
 
         GameDataFirebase.fetchGameModel(gameCode , OnDocumentDeleted = {
             // Handle game deletion, e.g., navigate back to main activity or show an alert
@@ -47,9 +66,6 @@ class teaming : AppCompatActivity() {
         })
         Log.d("TeamingActivity", "GameModel fetched")
 
-
-        val playerId = intent.getStringExtra("PLAYER_ID") ?: ""
-        val playerName = intent.getStringExtra("PLAYER_NAME") ?: ""
         val profileImageResId = intent.getIntExtra("PROFILE_IMAGE_RES_ID", R.drawable.profile12)
 
         binding.codeText.text = "CODE-${gameCode}"
@@ -60,7 +76,6 @@ class teaming : AppCompatActivity() {
                 Log.w("GameModel", "GameModel is null")
                 return@Observer
             }
-
             checkCreatorId(value)
 //            binding.swapButton.visibility = View.VISIBLE
 
@@ -95,7 +110,7 @@ class teaming : AppCompatActivity() {
                     binding.playerNameT4.text = ""
                 }
                 // Check if team 2 has at least one player
-                if (team2.players.isNotEmpty() && team2.players.size > 0) {
+                if (team2.players.isNotEmpty() &&  team2.players.size > 0) {
                     binding.profileImageT3.setImageResource(value.teams[1].players[0].profileImageResId)
                     binding.playerNameT3.text = value.teams[1].players[0].name
                     binding.profileImageT4.setImageResource(R.drawable.backgrund2)
@@ -109,6 +124,8 @@ class teaming : AppCompatActivity() {
                 }
             }
         })
+
+        createEngine(rId)
 
         binding.swapIcon.setOnClickListener(View.OnClickListener {
             if(swapPlayerList.size == 2) {
@@ -162,6 +179,7 @@ class teaming : AppCompatActivity() {
         binding.backButton.setOnClickListener{
 
             val currentPlayerId = intent.getStringExtra("PLAYER_ID") ?: ""
+            stopCall()
 
             startActivity(Intent(this@teaming, MainActivity::class.java))
 
@@ -173,6 +191,7 @@ class teaming : AppCompatActivity() {
                     Firebase.firestore.collection("games").document(gameCode)
                         .delete()
                         .addOnSuccessListener {
+                            startActivity(Intent(this@teaming, MainActivity::class.java))
                         }
                         .addOnFailureListener { e ->
                             Log.w("Firestore", "Error deleting game", e)
@@ -318,5 +337,128 @@ class teaming : AppCompatActivity() {
 
             }
         }
+    }
+
+    fun createEngine(roomId:String){
+        val profile = ZegoEngineProfile()
+        profile.appID = Utils.APP_ID.toLong()
+        profile.appSign = Utils.APP_SIGN_KEY
+        profile.scenario = ZegoScenario.DEFAULT // General scenario.
+        profile.application = application
+
+        ZegoExpressEngine.createEngine(profile, null)
+
+        loginRoom(roomId)
+        startEventListener()
+    }
+
+    fun destroyEngine(){
+        ZegoExpressEngine.destroyEngine(null)
+    }
+
+    fun startEventListener(){
+        ZegoExpressEngine.getEngine().setEventHandler(object : IZegoEventHandler() {
+            override fun onRoomStreamUpdate(
+                roomID: String?,
+                updateType: ZegoUpdateType?,
+                streamList: ArrayList<ZegoStream>?,
+                extendedData: JSONObject?
+            ) {
+                super.onRoomStreamUpdate(roomID, updateType, streamList, extendedData)
+                if (updateType == ZegoUpdateType.ADD) {
+                    startPlayStream(streamList!!.get(0).streamID)
+                } else {
+                    stopPlayStream(streamList!!.get(0).streamID)
+                }
+            }
+
+            override fun onRoomUserUpdate(
+                roomID: String?,
+                updateType: ZegoUpdateType?,
+                userList: ArrayList<ZegoUser>?
+            ) {
+                super.onRoomUserUpdate(roomID, updateType, userList)
+
+            }
+
+            override fun onRoomStateChanged(
+                roomID: String?,
+                reason: ZegoRoomStateChangedReason?,
+                errorCode: Int,
+                extendedData: JSONObject?
+            ) {
+                super.onRoomStateChanged(roomID, reason, errorCode, extendedData)
+            }
+
+            override fun onPublisherStateUpdate(
+                streamID: String?,
+                state: ZegoPublisherState?,
+                errorCode: Int,
+                extendedData: JSONObject?
+            ) {
+                super.onPublisherStateUpdate(streamID, state, errorCode, extendedData)
+            }
+
+            override fun onPlayerStateUpdate(
+                streamID: String?,
+                state: ZegoPlayerState?,
+                errorCode: Int,
+                extendedData: JSONObject?
+            ) {
+                super.onPlayerStateUpdate(streamID, state, errorCode, extendedData)
+            }
+        })
+    }
+
+    fun stopEventListener(){
+        ZegoExpressEngine.getEngine().setEventHandler(null)
+    }
+
+    fun loginRoom(roomId:String){
+        var user = ZegoUser(playerId,playerName)
+        var roomConfig = ZegoRoomConfig()
+        roomConfig.isUserStatusNotify = true
+
+        ZegoExpressEngine.getEngine().loginRoom(roomId,user,roomConfig) { error: Int, extendedData: JSONObject ->
+            if (error == 0) {
+                startPublish()
+            } else {
+                Log.e("ZegoCloud", "Failed to log in with error code: $error")
+            }
+        }
+    }
+
+    fun logoutRoom() {
+        ZegoExpressEngine.getEngine().logoutRoom()
+    }
+
+    fun startPublish() {
+        val streamID = "room_${(100..999).random()}"
+        ZegoExpressEngine.getEngine().enableCamera(false)
+        ZegoExpressEngine.getEngine().startPublishingStream(streamID)
+    }
+
+    fun stopPublish() {
+        ZegoExpressEngine.getEngine().stopPublishingStream()
+    }
+
+    fun startPlayStream(streamID: String?) {
+        ZegoExpressEngine.getEngine().startPlayingStream(streamID)
+    }
+
+    fun stopPlayStream(streamID: String?) {
+        ZegoExpressEngine.getEngine().stopPlayingStream(streamID)
+    }
+
+    fun stopCall(){
+        stopEventListener()
+        stopPublish()
+        logoutRoom()
+        destroyEngine()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        destroyEngine()
     }
 }

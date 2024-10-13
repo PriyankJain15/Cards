@@ -38,6 +38,7 @@
             android:background="@drawable/edittext_bg"
             android:hint="Enter Name"
             android:gravity="center"
+            android:singleLine="true"
             android:maxLength="15"
             android:ems="15"
             android:layout_marginTop="37dp"

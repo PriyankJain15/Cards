@@ -8,7 +8,8 @@ data class GameModelFirebase(
     val highestBidSuit: Suit? = null,
     val highestBid: Int = 0,
     var highestBidPlayer: Team.Player? = null,
-    var roomCreatorId:String = ""
+    var roomCreatorId:String = "",
+    var roomId:String = ""
 ) {
 
     data class Team(

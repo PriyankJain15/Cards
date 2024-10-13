@@ -29,17 +29,18 @@ class CreateFragment() : Fragment() {
             val gameCode = generateGameCode()
             var pref: SharedPreferences? = activity?.getSharedPreferences("userdata", AppCompatActivity.MODE_PRIVATE)
 
-            var playerId = createGameInFirebase(gameCode,
+            var roomId = createGameInFirebase(gameCode,
                 pref?.getString("username", "Guest").toString(),
-                pref?.getInt("profileImage", R.drawable.profile12) as Int)
+                pref?.getInt("profileImage", R.drawable.profile12) as Int,
+                pref.getString("userId", "Guesttt").toString())
 
-            
 
             val intent = Intent(activity, teaming::class.java).apply {
                 putExtra("GAME_CODE", gameCode)
-                putExtra("PLAYER_ID", playerId)
-                putExtra("PLAYER_NAME", pref.getString("username", "Guest").toString(),)
+                putExtra("PLAYER_ID", pref.getString("userId", "Guesttt").toString())
+                putExtra("PLAYER_NAME", pref.getString("username", "Guest").toString())
                 putExtra("PROFILE_IMAGE_RES_ID", pref.getInt("profileImage", R.drawable.profile12))
+                putExtra("RoomID",roomId)
             }
             startActivity(intent)
 
@@ -55,17 +56,13 @@ class CreateFragment() : Fragment() {
     }
 
 
-    fun createGameInFirebase(gameCode: String, playerName: String, profileImageResId: Int): String {
-
-        val playerId = (0..9999).random()
-         // Assign team ID (1 or 2) based on your logic
-
+    fun createGameInFirebase(gameCode: String, playerName: String, profileImageResId: Int, playerId:String):String{
 
         // Create a new Player
         val player = GameModelFirebase.Team.Player(
             name = playerName,
             profileImageResId = profileImageResId,
-            id = playerId.toString()
+            id = playerId
         )
 
         // Create a new Team and add the player
@@ -79,7 +76,8 @@ class CreateFragment() : Fragment() {
             gameCode = gameCode,
             status = GameModelFirebase.Status.WAITING,
             teams = mutableListOf(team),
-            roomCreatorId = playerId.toString()
+            roomCreatorId = playerId,
+            roomId = playerId
         )
 
         // Save the game to Firebase
@@ -87,10 +85,7 @@ class CreateFragment() : Fragment() {
             .document(gameModel.gameCode)
             .set(gameModel)
 
+        return gameModel.roomId
 
-        return playerId.toString() // Return the player ID for further use
     }
-
-
-
 }

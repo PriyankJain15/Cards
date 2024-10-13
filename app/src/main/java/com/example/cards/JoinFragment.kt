@@ -54,7 +54,7 @@ private fun addPlayerToGame(gamecode: String) {
 
         var pref: SharedPreferences? = activity?.getSharedPreferences("userdata", AppCompatActivity.MODE_PRIVATE)
 
-        val playerId = (0..9999).random().toString()
+        val playerId = pref?.getString("userId", "Guesttt").toString()
         val playerName =  pref?.getString("username", "Guest").toString() // Example: Replace with actual player name
         val profileImageResId = pref?.getInt("profileImage", R.drawable.profile12) as Int // Example: Replace with actual profile image resource ID
 
@@ -90,6 +90,7 @@ private fun addPlayerToGame(gamecode: String) {
                     Log.w("gamecode", it.teams[teamToJoin].players.toString())
 
                     it.teams[teamToJoin].players = (it.teams[teamToJoin].players + newPlayer).toMutableList()
+                    var roomId = it.roomId
                     Log.w("gamecode", it.teams[teamToJoin].players.toString())
                     // Update the game in Firestore
                     Firebase.firestore.collection("games").document(gamecode)
@@ -101,7 +102,8 @@ private fun addPlayerToGame(gamecode: String) {
                                     gamecode,
                                     playerId,
                                     playerName,
-                                    profileImageResId
+                                    profileImageResId,
+                                    roomId
                                 )
                             } else {
                                 Toast.makeText(
@@ -117,12 +119,13 @@ private fun addPlayerToGame(gamecode: String) {
                 }
         }
     }
-    private fun navigateToTeamingActivity(gameCode: String, playerId: String, playerName: String, profileImageResId: Int) {
+    private fun navigateToTeamingActivity(gameCode: String, playerId: String, playerName: String, profileImageResId: Int, roomId:String) {
         val intent = Intent(activity, teaming::class.java).apply {
             putExtra("GAME_CODE", gameCode)
             putExtra("PLAYER_ID", playerId)
             putExtra("PLAYER_NAME", playerName)
             putExtra("PROFILE_IMAGE_RES_ID", profileImageResId)
+            putExtra("RoomID",roomId)
         }
         startActivity(intent)
     }

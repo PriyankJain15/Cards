@@ -1,7 +1,6 @@
 package com.example.cards
 
 import android.app.Dialog
-import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -13,7 +12,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
-import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -46,7 +44,7 @@ class MainActivity : AppCompatActivity(){
         database = FirebaseDatabase.getInstance().reference
 
         // Assigning data to list
-        var list:MutableList<Int> = mutableListOf(R.drawable.profile01,R.drawable.profile02,R.drawable.profile03,
+        val list:MutableList<Int> = mutableListOf(R.drawable.profile01,R.drawable.profile02,R.drawable.profile03,
                                                   R.drawable.profile04,R.drawable.profile05,R.drawable.profile06,
                                                   R.drawable.profile07,R.drawable.profile08,R.drawable.profile09,
                                                   R.drawable.profile10,R.drawable.profile11,R.drawable.profile12,
@@ -58,7 +56,7 @@ class MainActivity : AppCompatActivity(){
 
         binding.settingIcon.setOnClickListener(View.OnClickListener {
             // Dialog box creation
-            var dialog:Dialog = Dialog(this@MainActivity)
+            val dialog = Dialog(this@MainActivity)
             dialog.setContentView(R.layout.dialog_details)
             dialog.setCancelable(false)
             dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
@@ -97,6 +95,11 @@ class MainActivity : AppCompatActivity(){
             btnSave.setOnClickListener(View.OnClickListener {
                 if(!playerName.text.toString().equals("")){
                     editor.putString("username",playerName.text.toString())
+                    var pn = playerName.text.toString()
+                    var rn = (100..999).random().toString()
+                    pn = pn.plus(rn)
+                    Log.w("Id",pn)
+                    editor.putString("userId", pn)
                 }else{
                     return@OnClickListener
                 }
@@ -108,7 +111,7 @@ class MainActivity : AppCompatActivity(){
             dialog.show()
         })
 
-        binding.banner.setOnClickListener(View.OnClickListener {
+        binding.banner.setOnClickListener{
             Log.w("banner","entered")
             create_dialog = Dialog(this@MainActivity)
             create_dialog.setContentView(R.layout.dialog_create_join)
@@ -119,9 +122,9 @@ class MainActivity : AppCompatActivity(){
             viewPager.adapter = viewAdapter
 
             TabLayoutMediator(tab,viewPager){
-                tab,position-> when(position){
-                    0 -> tab.text = "CREATE"
-                    1 -> tab.text = "JOIN"
+                tabb,position-> when(position){
+                    0 -> tabb.text = "CREATE"
+                    1 -> tabb.text = "JOIN"
                 }
             }.attach()
 
@@ -133,7 +136,7 @@ class MainActivity : AppCompatActivity(){
 
             create_dialog.show()
 
-        })
+        }
     }
 
 }
